@@ -24,6 +24,11 @@
   const el = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; };
   const money = n => CFG.currency + " " + Math.round(n).toLocaleString("es-AR");
   const catImg = slug => `img/cat/${slug}.jpg`;
+  const DISC = Number(CFG.webDiscount) || 0;
+  const webPrice = p => Math.round(p * (1 - DISC / 100));
+  // imagen por TIPO de producto con respaldo a la imagen de categoría
+  const prodImgTag = (p, cls) =>
+    `<img class="${cls || ""}" src="img/prod/${p.t || "_"}.webp" alt="" loading="lazy" onerror="this.onerror=null;this.src='${catImg(p.cat)}'"/>`;
   const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
   function loadCart() { try { return JSON.parse(localStorage.getItem("c2a_cart") || "[]"); } catch { return []; } }
@@ -46,12 +51,26 @@
     $("#ftrHours").textContent = "🕒 " + CFG.hours;
     $("#ftrDelivery").textContent = "🚚 " + CFG.delivery;
     $("#yr").textContent = "2026";
+
+    // cinta promo (marquesina)
+    if (DISC > 0) {
+      const cond = CFG.discountCondition || "pagando en efectivo al retirar";
+      const m = `💵 <b>${DISC}% OFF</b> comprando por la web ${cond} <span class="sep">◆</span> 🚚 ${CFG.delivery} <span class="sep">◆</span> 🧱 Más de ${PRODS.length.toLocaleString("es-AR")} productos para tu obra <span class="sep">◆</span> 💵 <b>${DISC}% OFF</b> en efectivo al retirar <span class="sep">◆</span>`;
+      $("#promoMarq").innerHTML = m + m;
+      $("#heroPromo").innerHTML =
+        `<span class="pct">${DISC}%</span>
+         <span class="ptx">OFF comprando por la web<small>${cond} · armá tu pedido y retiralo</small></span>`;
+    } else {
+      $("#promoStrip").style.display = "none";
+      $("#heroPromo").style.display = "none";
+    }
   }
 
   // ---------- routing ----------
   function go(mode, slug) {
     view = { mode, slug: slug || null, q: view.q };
     if (mode !== "search") $("#q").value = "", view.q = "";
+    try { history.replaceState(null, "", mode === "category" && slug ? "#cat=" + slug : "#"); } catch (e) {}
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
     render();
   }
@@ -126,15 +145,22 @@
   // ---------- tarjeta de producto ----------
   function card(p) {
     const c = el("div", "card");
-    const qty = cart.get(p.id) || 0;
+    const wp = webPrice(p.price);
+    const prices = DISC > 0
+      ? `<div class="card-prices">
+           <span class="card-list">${money(p.price)}</span>
+           <span class="card-web"><span class="lbl">💵 precio web efectivo</span>${money(wp)}</span>
+         </div>`
+      : `<div class="card-prices"><span class="card-web">${money(p.price)}</span></div>`;
     c.innerHTML =
-      `<div class="card-img"><img src="${catImg(p.cat)}" alt="" loading="lazy"/>
-        <span class="card-cat">${CAT_BY[p.cat] ? CAT_BY[p.cat].name : ""}</span></div>
+      `<div class="card-img">${prodImgTag(p)}
+        <span class="card-cat">${CAT_BY[p.cat] ? CAT_BY[p.cat].name : ""}</span>
+        ${DISC > 0 ? `<span class="card-off">-${DISC}%</span>` : ""}</div>
        <div class="card-bd">
          <div class="card-name">${p.name}</div>
          ${p.brand ? `<div class="card-brand">${p.brand}</div>` : ""}
          <div class="card-foot">
-           <div class="card-price">${money(p.price)}</div>
+           ${prices}
            <div class="ctrl"></div>
          </div>
        </div>`;
@@ -189,26 +215,35 @@
   }
 
   // ---------- carrito ----------
+  function cartTotals() {
+    let subtotal = 0;
+    cart.forEach((q, id) => { const p = PROD_BY[id]; if (p) subtotal += p.price * q; });
+    const web = Math.round(subtotal * (1 - DISC / 100));
+    return { subtotal, web, save: subtotal - web };
+  }
+
   function renderCart() {
     const body = $("#cartList"); body.innerHTML = "";
     if (cart.size === 0) {
       body.appendChild(el("div", "cart-empty", "<h3>🛒</h3><p>Tu pedido está vacío.<br>Agregá materiales del catálogo.</p>"));
+      $("#cartSubtotal").textContent = money(0);
       $("#cartTotal").textContent = money(0);
+      $("#cartDiscount").textContent = "-" + money(0);
+      $("#cartSave").textContent = "";
+      $("#cartDiscLine").style.display = DISC > 0 ? "" : "none";
       $("#waCheckout").disabled = true;
       return;
     }
-    let total = 0;
     cart.forEach((q, id) => {
       const p = PROD_BY[id]; if (!p) return;
-      total += p.price * q;
       const ci = el("div", "ci");
       ci.innerHTML =
-        `<img src="${catImg(p.cat)}" alt=""/>
+        `${prodImgTag(p)}
          <div class="ci-bd">
            <div class="ci-name">${p.name}</div>
            <div class="ci-row">
              <div class="ci-stepper"><button>−</button><span>${q}</span><button>+</button></div>
-             <div class="ci-price">${money(p.price * q)}</div>
+             <div class="ci-price">${money(webPrice(p.price) * q)}</div>
            </div>
            <button class="ci-rm">Quitar</button>
          </div>`;
@@ -218,21 +253,38 @@
       ci.querySelector(".ci-rm").onclick = () => setQty(id, 0);
       body.appendChild(ci);
     });
-    $("#cartTotal").textContent = money(total);
+    const t = cartTotals();
+    $("#cartSubtotal").textContent = money(t.subtotal);
+    $("#cartDiscLabel").textContent = `Descuento web (${DISC}%)`;
+    $("#cartDiscount").textContent = "- " + money(t.save);
+    $("#cartDiscLine").style.display = DISC > 0 ? "" : "none";
+    $("#cartTotal").textContent = money(t.web);
+    $("#cartSave").innerHTML = DISC > 0
+      ? `🎉 Ahorrás <b>${money(t.save)}</b> ${CFG.discountCondition || "pagando en efectivo al retirar"}`
+      : "";
     $("#waCheckout").disabled = false;
   }
 
   function checkout() {
     if (cart.size === 0) return;
-    let lines = [`*PEDIDO — ${CFG.name}*`, ""], total = 0, i = 0;
+    let lines = [`*PEDIDO WEB — ${CFG.name}*`, ""], i = 0;
     cart.forEach((q, id) => {
       const p = PROD_BY[id]; if (!p) return;
-      i++; total += p.price * q;
+      i++;
       lines.push(`${i}) ${p.name}`);
-      lines.push(`    ${q} x ${money(p.price)} = ${money(p.price * q)}`);
+      lines.push(`    ${q} x ${money(webPrice(p.price))} = ${money(webPrice(p.price) * q)}`);
     });
-    lines.push("", "————————————————", `*TOTAL ESTIMADO: ${money(total)}*`,
-      "_(no incluye flete · sujeto a confirmación)_", "", "Mi nombre: ", "Dirección de entrega: ");
+    const t = cartTotals();
+    lines.push("", "————————————————");
+    if (DISC > 0) {
+      lines.push(`Subtotal lista: ${money(t.subtotal)}`,
+        `Descuento web ${DISC}%: -${money(t.save)}`,
+        `*TOTAL WEB EFECTIVO: ${money(t.web)}*`,
+        `_(${DISC}% OFF ${CFG.discountCondition || "pagando en efectivo al retirar"} · no incluye flete)_`);
+    } else {
+      lines.push(`*TOTAL: ${money(t.web)}*`, "_(no incluye flete · sujeto a confirmación)_");
+    }
+    lines.push("", "Mi nombre: ", "¿Retiro o envío?: ", "Dirección (si es envío): ");
     const url = `https://wa.me/${CFG.whatsapp}?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(url, "_blank");
   }
@@ -269,7 +321,8 @@
     $("#homeLink").onclick = e => { e.preventDefault(); go("home"); };
     $("#moreBtn").onclick = () => { const g = $("#grid"); if (g) appendPage(g); };
     document.addEventListener("keydown", e => { if (e.key === "Escape") openCart(false); });
-    render();
+    const m = (location.hash || "").match(/cat=([\w-]+)/);
+    if (m && CAT_BY[m[1]]) go("category", m[1]); else render();
   }
 
   document.addEventListener("DOMContentLoaded", init);

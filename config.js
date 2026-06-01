@@ -21,4 +21,9 @@ window.CONFIG = {
   coords: { lat: -37.9787, lng: -57.5759 },
 
   currency: "$",
+
+  // 🔖 Gancho de venta: descuento por comprar/pedir por la web pagando en
+  // efectivo al retirar. Cambiá el número cuando quieras (ej. 10).
+  webDiscount: 15,
+  discountCondition: "pagando en efectivo al retirar",
 };

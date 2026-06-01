@@ -14,6 +14,11 @@
 </head>
 <body>
 
+  <!-- ===== CINTA PROMO ===== -->
+  <div class="promo-strip" id="promoStrip">
+    <span class="promo-marq" id="promoMarq"></span>
+  </div>
+
   <!-- ===== HEADER ===== -->
   <header class="hdr" id="hdr">
     <div class="hdr-in">
@@ -39,6 +44,7 @@
       <div class="hero-in">
         <h1>Corralón <span>2 de Abril</span></h1>
         <p class="hero-sub" id="heroTag"></p>
+        <div class="hero-promo" id="heroPromo"></div>
         <div class="hero-chips" id="heroChips"></div>
         <a class="hero-wa" id="heroWa" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24"><path d="M20 4A11 11 0 003 19l-1 4 4-1A11 11 0 1020 4z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
@@ -82,7 +88,10 @@
     </div>
     <div class="drawer-body" id="cartList"></div>
     <div class="drawer-ft">
-      <div class="cart-total"><span>Total estimado</span><strong id="cartTotal">$0</strong></div>
+      <div class="cart-line"><span>Subtotal lista</span><span id="cartSubtotal">$0</span></div>
+      <div class="cart-line disc" id="cartDiscLine"><span id="cartDiscLabel">Descuento web</span><span id="cartDiscount">-$0</span></div>
+      <div class="cart-total"><span>Total web <small>efectivo</small></span><strong id="cartTotal">$0</strong></div>
+      <div class="cart-save" id="cartSave"></div>
       <p class="cart-disclaimer">No incluye flete. Confirmás precio y disponibilidad por WhatsApp.</p>
       <button class="wa-checkout" id="waCheckout" disabled>
         <svg viewBox="0 0 24 24"><path d="M20 4A11 11 0 003 19l-1 4 4-1A11 11 0 1020 4z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
