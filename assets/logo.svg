@@ -1,26 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" width="360" height="96">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 104" width="380" height="104">
+  <g transform="translate(6,8)">
   <defs>
-    <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#F2761B"/>
-      <stop offset="1" stop-color="#C9430A"/>
+    <linearGradient id="cel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6CACE4"/><stop offset="1" stop-color="#3A78B8"/>
     </linearGradient>
+    <clipPath id="rc"><rect x="3" y="3" width="82" height="82" rx="26"/></clipPath>
   </defs>
-  <!-- emblema -->
-  <g transform="translate(4,6)">
-    <rect x="0" y="0" width="84" height="84" rx="20" fill="url(#lg)"/>
-    <path d="M42 16 L70 36 H62 V39 H22 V36 H14 Z" fill="#1A1A1A" opacity="0.92"/>
-    <g fill="#FDF3E7">
-      <rect x="24" y="42" width="36" height="7" rx="1.2"/>
-      <rect x="24" y="51" width="16" height="7" rx="1.2"/>
-      <rect x="44" y="51" width="16" height="7" rx="1.2"/>
-      <rect x="24" y="60" width="36" height="7" rx="1.2"/>
+  <g clip-path="url(#rc)">
+    <rect x="3" y="3" width="82" height="82" fill="url(#cel)"/>
+    <!-- Sol de Mayo -->
+    <g><path d="M42.8,24.7 L44.0,5.3 L45.2,24.7 Z" fill="#F4B824"/>
+      <path d="M46.9,24.9 L51.5,12.4 L49.3,25.5 Z" fill="#F4B824"/>
+      <path d="M50.8,26.2 L61.6,10.0 L53.0,27.4 Z" fill="#F4B824"/>
+      <path d="M54.3,28.4 L64.5,19.9 L56.0,30.2 Z" fill="#F4B824"/>
+      <path d="M57.1,31.5 L74.5,22.9 L58.3,33.7 Z" fill="#F4B824"/>
+      <path d="M58.9,35.2 L72.1,33.0 L59.6,37.6 Z" fill="#F4B824"/>
+      <path d="M59.8,39.2 L79.2,40.5 L59.8,41.7 Z" fill="#F4B824"/>
+      <path d="M59.6,43.4 L72.1,48.0 L58.9,45.8 Z" fill="#F4B824"/>
+      <path d="M58.3,47.3 L74.5,58.1 L57.1,49.5 Z" fill="#F4B824"/>
+      <path d="M56.0,50.8 L64.5,61.0 L54.3,52.5 Z" fill="#F4B824"/>
+      <path d="M53.0,53.5 L61.6,71.0 L50.8,54.8 Z" fill="#F4B824"/>
+      <path d="M49.3,55.4 L51.5,68.5 L46.9,56.1 Z" fill="#F4B824"/>
+      <path d="M45.2,56.3 L44.0,75.7 L42.8,56.3 Z" fill="#F4B824"/>
+      <path d="M41.1,56.1 L36.5,68.5 L38.7,55.4 Z" fill="#F4B824"/>
+      <path d="M37.2,54.8 L26.4,71.0 L35.0,53.5 Z" fill="#F4B824"/>
+      <path d="M33.7,52.5 L23.5,61.0 L32.0,50.8 Z" fill="#F4B824"/>
+      <path d="M30.9,49.5 L13.5,58.1 L29.7,47.3 Z" fill="#F4B824"/>
+      <path d="M29.1,45.8 L15.9,48.0 L28.4,43.4 Z" fill="#F4B824"/>
+      <path d="M28.2,41.7 L8.8,40.5 L28.2,39.2 Z" fill="#F4B824"/>
+      <path d="M28.4,37.6 L15.9,33.0 L29.1,35.2 Z" fill="#F4B824"/>
+      <path d="M29.7,33.7 L13.5,22.9 L30.9,31.5 Z" fill="#F4B824"/>
+      <path d="M32.0,30.2 L23.5,19.9 L33.7,28.4 Z" fill="#F4B824"/>
+      <path d="M35.0,27.4 L26.4,10.0 L37.2,26.2 Z" fill="#F4B824"/>
+      <path d="M38.7,25.5 L36.5,12.4 L41.1,24.9 Z" fill="#F4B824"/></g>
+    <circle cx="44.0" cy="40.5" r="13.6" fill="#F4B824" stroke="#E09A0B" stroke-width="1.6"/>
+    <g fill="#E09A0B" opacity="0.85">
+      <circle cx="38.7" cy="38.7" r="1.6"/>
+      <circle cx="49.3" cy="38.7" r="1.6"/>
+      <path d="M39.2,44.9 Q44.0,49.3 48.8,44.9"
+            fill="none" stroke="#E09A0B" stroke-width="2.4" stroke-linecap="round"/>
     </g>
-    <text x="42" y="63" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="30" fill="#1A1A1A">2</text>
+    <!-- techo / construcción (blanco) -->
+    <path d="M14.1,72.2 L44.0,52.8 L73.9,72.2 Z" fill="#fff"/>
+    <rect x="21.1" y="70.4" width="45.8" height="14.1" fill="#fff"/>
+    <rect x="26.4" y="73.9" width="14.1" height="10.6" fill="#6CACE4"/>
+    <rect x="47.5" y="73.9" width="14.1" height="10.6" fill="#6CACE4"/>
   </g>
-  <!-- wordmark -->
-  <g transform="translate(100,0)">
-    <text x="0" y="34" font-family="Arial, sans-serif" font-weight="700" font-size="18" letter-spacing="3" fill="#F2761B">CORRALÓN</text>
-    <text x="0" y="64" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="32" fill="#1A1A1A">2 DE ABRIL</text>
-    <text x="2" y="82" font-family="Arial, sans-serif" font-weight="600" font-size="10.5" letter-spacing="1.5" fill="#6b6b6b">MATERIALES PARA LA CONSTRUCCIÓN</text>
+</g>
+  <g transform="translate(108,0)" font-family="Inter, Arial, sans-serif">
+    <text x="0" y="38" font-size="18" font-weight="700" letter-spacing="5" fill="#3A78B8">CORRALÓN</text>
+    <text x="0" y="70" font-size="34" font-weight="900" fill="#0C2D52">2 DE ABRIL</text>
+    <text x="2" y="90" font-size="11" font-weight="600" letter-spacing="1.4" fill="#5a6b7d">MATERIALES PARA LA CONSTRUCCIÓN</text>
   </g>
 </svg>

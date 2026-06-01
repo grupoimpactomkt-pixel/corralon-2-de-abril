@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150" width="240" height="150">
+  <g fill="#FFFFFF" stroke="#0C2D52" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Gran Malvina (oeste): más vertical y angosta -->
+    <path d="M58,26 C74,24 84,36 82,50 C80,62 90,68 86,80 C83,92 90,100 82,110
+             C76,118 62,116 58,106 C54,98 60,90 50,84 C40,78 40,62 48,54
+             C42,46 46,32 58,26 Z"/>
+    <!-- Isla Soledad (este): más grande, con istmo y lóbulo sur (Lafonia) -->
+    <path d="M150,24 C184,20 210,34 208,54 C206,70 190,72 198,84 C205,94 196,104 182,102
+             C170,100 172,90 160,90 C152,96 152,110 162,118 C152,128 132,124 130,112
+             C128,100 140,96 134,86 C122,82 116,52 132,38 C137,30 143,26 150,24 Z"/>
+  </g>
+</svg>
