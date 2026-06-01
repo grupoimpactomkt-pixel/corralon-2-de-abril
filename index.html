@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corralón 2 de Abril · Catálogo de materiales</title>
+  <meta name="description" content="Catálogo de materiales para la construcción del Corralón 2 de Abril, Mar del Plata. Pedí por WhatsApp con envío a domicilio." />
+  <link rel="icon" type="image/svg+xml" href="assets/emblem.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" /></noscript>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="hdr" id="hdr">
+    <div class="hdr-in">
+      <a class="brand" href="#" id="homeLink">
+        <img src="assets/logo.svg" alt="Corralón 2 de Abril" class="brand-logo" />
+      </a>
+      <div class="search">
+        <svg viewBox="0 0 24 24" class="search-ic"><path d="M21 21l-4.3-4.3M11 19a8 8 0 110-16 8 8 0 010 16z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="q" type="search" placeholder="Buscar cemento, hierro, pintura, caño…" autocomplete="off" />
+        <button id="qClear" class="q-clear" aria-label="Limpiar" hidden>&times;</button>
+      </div>
+      <button class="cart-btn" id="cartBtn" aria-label="Ver pedido">
+        <svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12L5 3H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/></svg>
+        <span class="cart-badge" id="cartBadge" hidden>0</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-in">
+        <h1>Corralón <span>2 de Abril</span></h1>
+        <p class="hero-sub" id="heroTag"></p>
+        <div class="hero-chips" id="heroChips"></div>
+        <a class="hero-wa" id="heroWa" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><path d="M20 4A11 11 0 003 19l-1 4 4-1A11 11 0 1020 4z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          Consultar por WhatsApp
+        </a>
+      </div>
+    </section>
+
+    <!-- breadcrumb / titulo de seccion -->
+    <div class="section-head" id="secHead"></div>
+
+    <!-- contenido dinamico -->
+    <section id="view" class="wrap"></section>
+
+    <div class="more-wrap"><button id="moreBtn" class="more-btn" hidden>Ver más productos</button></div>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="ftr">
+    <div class="ftr-in">
+      <div>
+        <img src="assets/logo.svg" alt="" class="ftr-logo" />
+        <p id="ftrAddr"></p>
+        <p id="ftrHours"></p>
+        <p id="ftrDelivery"></p>
+      </div>
+      <div class="ftr-cta">
+        <a id="ftrWa" class="hero-wa" target="_blank" rel="noopener">Pedí por WhatsApp</a>
+        <p class="ftr-note">Precios de lista sujetos a modificación sin previo aviso. Consultá disponibilidad y costo de flete.</p>
+      </div>
+    </div>
+    <div class="ftr-bottom">© <span id="yr"></span> Corralón 2 de Abril · Catálogo digital</div>
+  </footer>
+
+  <!-- ===== CART DRAWER ===== -->
+  <div class="drawer-bg" id="drawerBg" hidden></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-hd">
+      <h3>Tu pedido</h3>
+      <button id="drawerClose" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="drawer-body" id="cartList"></div>
+    <div class="drawer-ft">
+      <div class="cart-total"><span>Total estimado</span><strong id="cartTotal">$0</strong></div>
+      <p class="cart-disclaimer">No incluye flete. Confirmás precio y disponibilidad por WhatsApp.</p>
+      <button class="wa-checkout" id="waCheckout" disabled>
+        <svg viewBox="0 0 24 24"><path d="M20 4A11 11 0 003 19l-1 4 4-1A11 11 0 1020 4z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        Enviar pedido por WhatsApp
+      </button>
+    </div>
+  </aside>
+
+  <script src="config.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

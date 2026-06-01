@@ -1,0 +1,8 @@
+# scripts de build y temporales (no hacen falta en el sitio publicado)
+build_data.py
+fetch_images.py
+make_zip.py
+__pycache__/
+*.pyc
+*.zip
+.DS_Store
