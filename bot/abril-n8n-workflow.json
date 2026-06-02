@@ -1,0 +1,323 @@
+{
+  "name": "Corralón 2 de Abril · Asistente Abril (WhatsApp)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "abril-whatsapp",
+        "responseMode": "onReceived"
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "abril-whatsapp"
+    },
+    {
+      "parameters": {
+        "includeOtherInputFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "evolutionUrl",
+              "type": "string",
+              "value": "https://TU-EVOLUTION-API"
+            },
+            {
+              "id": "a2",
+              "name": "instance",
+              "type": "string",
+              "value": "TU-INSTANCIA"
+            },
+            {
+              "id": "a3",
+              "name": "apiKey",
+              "type": "string",
+              "value": "TU-APIKEY-EVOLUTION"
+            },
+            {
+              "id": "a4",
+              "name": "pauseMinutes",
+              "type": "number",
+              "value": 30
+            },
+            {
+              "id": "a5",
+              "name": "resumeKeyword",
+              "type": "string",
+              "value": "#abril"
+            },
+            {
+              "id": "a6",
+              "name": "catalogUrl",
+              "type": "string",
+              "value": "https://grupoimpactomkt-pixel.github.io/corralon-2-de-abril/catalog.json"
+            }
+          ]
+        }
+      },
+      "id": "config",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// ====== Abril · parseo + handoff (Micaela interrumpe / Abril se calla) ======\nconst cfg = $('Config').first().json;\nconst PAUSE_MIN = Number(cfg.pauseMinutes) || 30;\nconst RESUME_KW = String(cfg.resumeKeyword || '#abril').toLowerCase().trim();\nconst CATALOG_URL = cfg.catalogUrl;\n\nconst store = $getWorkflowStaticData('global');\nstore.paused  = store.paused  || {};   // { jid: timestamp-fin-pausa }\nstore.botSent = store.botSent || [];    // ids de mensajes que mandó Abril\n\nconst wh   = $('Webhook').first().json;\nconst body = wh.body || wh;\nif (body.event && body.event !== 'messages.upsert') return [];\nlet data = body.data; if (Array.isArray(data)) data = data[0]; data = data || {};\nconst key      = data.key || {};\nconst jid      = key.remoteJid || '';\nconst fromMe   = !!key.fromMe;\nconst msgId    = key.id || '';\nconst m        = data.message || {};\nconst text     = String(m.conversation || (m.extendedTextMessage && m.extendedTextMessage.text) || '').trim();\nconst pushName = data.pushName || '';\nconst now = Date.now();\n\n// descartar: grupos, estados, sin texto\nif (!jid || jid.endsWith('@g.us') || jid === 'status@broadcast' || !text) return [];\n\n// ---- mensajes salientes (los manda el celu: Abril o Micaela) ----\nif (fromMe) {\n  if (store.botSent.includes(msgId)) return [];          // eco del propio Abril -> ignorar\n  if (text.toLowerCase() === RESUME_KW) {                 // Micaela devuelve el control\n    delete store.paused[jid];\n    return [];\n  }\n  store.paused[jid] = now + PAUSE_MIN * 60 * 1000;        // Micaela tomó la charla -> pausar Abril\n  return [];\n}\n\n// ---- mensaje del cliente ----\nconst until = store.paused[jid] || 0;\nif (until && now < until) return [];                      // Micaela está atendiendo -> Abril callada\nif (until && now >= until) delete store.paused[jid];      // venció la pausa -> Abril retoma\n\n// precargar catálogo una vez (lo usa la herramienta buscarPrecio)\nif (!store.catalog) {\n  try { const r = await this.helpers.httpRequest({ url: CATALOG_URL, json: true });\n        store.catalog = r.productos || r; }\n  catch (e) { store.catalog = []; }\n}\n\nreturn [{ json: { chatId: jid, number: jid.split('@')[0], text, pushName, sessionId: jid } }];\n"
+      },
+      "id": "abril-(parse-&-gate)",
+      "name": "Abril (parse & gate)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "Sos **Abril**, la asistente virtual del **Corralón 2 de Abril** (corralón y ferretería en Mar del Plata).\nAtendés por WhatsApp. Tu objetivo es **dejar la venta lista** para que **Micaela** (la dueña/vendedora) solo confirme o cierre.\n\n# Tono\n- Argentina, cordial y cercana (\"vos\", \"dale\", \"genial\"), pero profesional y clara.\n- Mensajes CORTOS (es WhatsApp). Sin párrafos largos. Usá emojis con medida (🙌🧱🚚💵).\n- Nunca suenes robótica. Nunca digas que sos una IA salvo que te pregunten directo.\n\n# Lo que SÍ hacés\n1. **Saludar** la primera vez del día: \"¡Hola! Soy Abril, del Corralón 2 de Abril 🧱. Micaela te atiende enseguida; mientras, contame qué necesitás y te voy armando el pedido.\"\n2. **Cotizar** SIEMPRE con la herramienta `buscarPrecio` (NUNCA inventes precios ni stock). Mostrá:\n   - Precio de lista y **precio web efectivo (15% OFF pagando en efectivo al retirar)**.\n   - Ej: \"Cemento Avellaneda x25kg: $8.100 lista — *$6.885 web efectivo* 💵\".\n3. **Armar el pedido** con la sumatoria a medida que el cliente agrega ítems. Mostrá total lista y **total web efectivo** + cuánto ahorra.\n4. **Formas de pago**: efectivo (15% OFF al retirar), transferencia y débito/crédito. (Si preguntan cuotas, decí que Micaela confirma.)\n5. **Recordar ubicación y horarios** sin que los pidan, cuando cierres un pedido:\n   - 📍 ARA Gral. Belgrano 900 esq. René Blanco, B° 2 de Abril, Mar del Plata.\n   - 🕒 Lun a Vie 7:30–17:30 · Sáb 8:00–13:00.\n6. **Ofrecer envío a domicilio** y, si quieren, **agendar la entrega** con la herramienta `agendarEntrega`\n   (pedí: nombre, dirección, día y franja horaria, y el detalle del pedido). Confirmá el turno agendado.\n7. Cuando el pedido esté armado, cerrá con: \"Te dejo el pedido listo 🙌. **Micaela lo confirma y coordina** el pago/entrega. ¿Algo más?\"\n\n# Lo que NO hacés\n- No cerrás la venta vos ni cobrás. No confirmás stock definitivo (eso lo confirma Micaela).\n- No inventás precios, productos ni promociones. Si no encontrás el producto, decí: \"Eso lo confirma Micaela, ya te ayuda 🙌\".\n- No respondas temas ajenos al corralón.\n- No insistas ni mandes muchos mensajes seguidos.\n\n# Herramientas\n- `buscarPrecio(consulta)`: devuelve productos del catálogo con precio lista y web. Usala para CUALQUIER precio.\n- `agendarEntrega(nombre, direccion, dia, franja, detalle)`: agenda una entrega a domicilio. Confirmá lo agendado.\n\n# Importante\n- Si el cliente ya venía hablando con Micaela (una persona), seguí su hilo sin repetir el saludo.\n- Datos del negocio: descuento web 15% en efectivo al retirar. WhatsApp 223 593-8651.\n"
+        }
+      },
+      "id": "abril",
+      "name": "Abril",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-haiku-20241022",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "claude-(modelo)",
+      "name": "Claude (modelo)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        620,
+        520
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "REEMPLAZAR",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}",
+        "contextWindowLength": 12
+      },
+      "id": "memoria-(por-chat)",
+      "name": "Memoria (por chat)",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        760,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "buscarPrecio",
+        "description": "Busca productos del catálogo del corralón y devuelve precio de lista y precio web efectivo (15% OFF). Input: el nombre o palabras del producto (ej 'cemento avellaneda 25').",
+        "language": "javaScript",
+        "jsCode": "\nconst store = $getWorkflowStaticData('global');\nconst cat = store.catalog || [];\nconst norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');\nconst terms = norm(query).split(/\\s+/).filter(Boolean);\nif (!terms.length) return 'Decime qué producto buscás.';\nconst hits = cat.filter(p => { const n = norm(p.n); return terms.every(t => n.includes(t)); }).slice(0, 8);\nif (!hits.length) return 'No lo encontré en el catálogo; que lo confirme Micaela.';\nreturn hits.map(p => `${p.n} | lista $${p.p} | web efectivo $${p.w} | ${p.c}`).join('\\n');\n"
+      },
+      "id": "buscarprecio",
+      "name": "buscarPrecio",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "agendarEntrega",
+        "description": "Agenda una entrega a domicilio. Input: un JSON string con campos nombre, direccion, dia, franja, detalle.",
+        "language": "javaScript",
+        "jsCode": "\nlet d = {}; try { d = JSON.parse(query); } catch (e) {\n  return 'Para agendar pasame un JSON con: nombre, direccion, dia, franja, detalle.';\n}\nconst store = $getWorkflowStaticData('global');\nstore.entregas = store.entregas || [];\nconst reg = { creado: new Date().toISOString(), nombre: d.nombre||'', direccion: d.direccion||'',\n              dia: d.dia||'', franja: d.franja||'', detalle: d.detalle||'' };\nstore.entregas.push(reg);\nreturn `Entrega agendada ✅ ${reg.dia} ${reg.franja} en ${reg.direccion}. Micaela la confirma.`;\n"
+      },
+      "id": "agendarentrega",
+      "name": "agendarEntrega",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.evolutionUrl }}/message/sendText/{{ $('Config').first().json.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $('Config').first().json.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $('Abril (parse & gate)').first().json.number, text: $json.output }) }}",
+        "options": {}
+      },
+      "id": "enviar-(evolution)",
+      "name": "Enviar (Evolution)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1080,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst store = $getWorkflowStaticData('global'); store.botSent = store.botSent || [];\nconst resp = $json; const id = resp && resp.key && resp.key.id;\nif (id) { store.botSent.push(id); if (store.botSent.length > 300) store.botSent = store.botSent.slice(-300); }\nreturn $input.all();\n"
+      },
+      "id": "registrar-envío",
+      "name": "Registrar envío",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Abril (parse & gate)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Abril (parse & gate)": {
+      "main": [
+        [
+          {
+            "node": "Abril",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Abril": {
+      "main": [
+        [
+          {
+            "node": "Enviar (Evolution)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar (Evolution)": {
+      "main": [
+        [
+          {
+            "node": "Registrar envío",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude (modelo)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Abril",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria (por chat)": {
+      "ai_memory": [
+        [
+          {
+            "node": "Abril",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscarPrecio": {
+      "ai_tool": [
+        [
+          {
+            "node": "Abril",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "agendarEntrega": {
+      "ai_tool": [
+        [
+          {
+            "node": "Abril",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {}
+}
