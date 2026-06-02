@@ -1,3 +1,8 @@
+# secretos del bot (NUNCA subir credenciales al repo público)
+bot/.secrets.json
+bot/*.local.json
+img_urls.txt
+
 # scripts de build y temporales (no hacen falta en el sitio publicado)
 build_data.py
 fetch_images.py

@@ -100,17 +100,7 @@ nodes = [
          {"httpMethod": "POST", "path": "abril-whatsapp", "responseMode": "onReceived"},
          extra={"webhookId": "abril-whatsapp"}),
 
-    node("Config", "n8n-nodes-base.set", 3.4, [220, 300], {
-        "includeOtherInputFields": True,
-        "assignments": {"assignments": [
-            {"id": "a1", "name": "evolutionUrl", "type": "string", "value": "https://TU-EVOLUTION-API"},
-            {"id": "a2", "name": "instance", "type": "string", "value": "TU-INSTANCIA"},
-            {"id": "a3", "name": "apiKey", "type": "string", "value": "TU-APIKEY-EVOLUTION"},
-            {"id": "a4", "name": "pauseMinutes", "type": "number", "value": 30},
-            {"id": "a5", "name": "resumeKeyword", "type": "string", "value": "#abril"},
-            {"id": "a6", "name": "catalogUrl", "type": "string",
-             "value": "https://grupoimpactomkt-pixel.github.io/corralon-2-de-abril/catalog.json"},
-        ]}}),
+    None,  # placeholder Config (se inyecta abajo)
 
     node("Abril (parse & gate)", "n8n-nodes-base.code", 2, [440, 300], {"jsCode": PARSE_CODE}),
 
@@ -161,10 +151,37 @@ connections = {
     "agendarEntrega": {"ai_tool": [[{"node": "Abril", "type": "ai_tool", "index": 0}]]},
 }
 
-wf = {"name": "Corralón 2 de Abril · Asistente Abril (WhatsApp)",
-      "nodes": nodes, "connections": connections,
-      "settings": {"executionOrder": "v1"}, "active": False, "pinData": {}}
+def config_node(creds):
+    return node("Config", "n8n-nodes-base.set", 3.4, [220, 300], {
+        "includeOtherInputFields": True,
+        "assignments": {"assignments": [
+            {"id": "a1", "name": "evolutionUrl", "type": "string", "value": creds["evolutionUrl"]},
+            {"id": "a2", "name": "instance", "type": "string", "value": creds["instance"]},
+            {"id": "a3", "name": "apiKey", "type": "string", "value": creds["apiKey"]},
+            {"id": "a4", "name": "pauseMinutes", "type": "number", "value": 30},
+            {"id": "a5", "name": "resumeKeyword", "type": "string", "value": "#abril"},
+            {"id": "a6", "name": "catalogUrl", "type": "string",
+             "value": "https://grupoimpactomkt-pixel.github.io/corralon-2-de-abril/catalog.json"},
+        ]}})
 
+PLACEHOLDER = {"evolutionUrl": "https://TU-EVOLUTION-API", "instance": "TU-INSTANCIA",
+               "apiKey": "TU-APIKEY-EVOLUTION"}
+
+def build(creds):
+    ns = [config_node(creds) if n is None else n for n in nodes]
+    return {"name": "Corralón 2 de Abril · Asistente Abril (WhatsApp)",
+            "nodes": ns, "connections": connections,
+            "settings": {"executionOrder": "v1"}, "active": False, "pinData": {}}
+
+# 1) versión committeable (placeholders, sin secretos)
 out = os.path.join(HERE, "abril-n8n-workflow.json")
-json.dump(wf, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-print("OK:", out, "|", len(nodes), "nodos")
+json.dump(build(PLACEHOLDER), open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+print("OK (placeholders):", out)
+
+# 2) versión local LISTA (con credenciales) si existe bot/.secrets.json -> NO se sube a git
+sec = os.path.join(HERE, ".secrets.json")
+if os.path.exists(sec):
+    creds = json.load(open(sec, encoding="utf-8"))
+    outl = os.path.join(HERE, "abril-n8n-workflow.local.json")
+    json.dump(build(creds), open(outl, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    print("OK (con credenciales):", outl)
