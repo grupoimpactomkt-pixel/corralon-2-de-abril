@@ -62,7 +62,9 @@ Abril es **híbrida**: precios por catálogo exacto + un RAG para conocimiento y
 
 ## Modo DEMO multi-cliente (ESTUAPP) — para prospectar en la calle
 Mismo WhatsApp, con clave. Sirve para "convertir" a Abril en cualquier comercio en vivo.
-- Escribís **`IMPACTODEMO`** → Abril pide el nombre del comercio → pide la lista de precios.
+- Flujo guiado en 3 pasos: **`IMPACTODEMO`** → 1) nombre del comercio → 2) **brief express** (1 línea:
+  rubro, envíos/retiro, formas de pago, promo/gancho; detecta el % de descuento solo; se puede `SALTAR`)
+  → 3) lista de precios. El brief se inyecta en el prompt para personalizar tono y responder dudas.
 - **Cargás la lista** por: texto/dictado ("Coca 2000, Agua 1200"), **PDF**, **foto/folleto** (OCR visión) o **audio** (Whisper).
 - Abril **se transforma en ese comercio** y cotiza SOLO con esa lista (+ % demo configurable). Salís con **`SALIRDEMO`**.
 - Los comercios quedan guardados en Supabase (`demo_tenants`, key chat_id).
