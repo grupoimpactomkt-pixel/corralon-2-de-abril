@@ -73,6 +73,15 @@ Mismo WhatsApp, con clave. Sirve para "convertir" a Abril en cualquier comercio 
 - Config nuevos en el workflow: supabaseUrl/Key, demoKey (IMPACTODEMO), exitKey (SALIRDEMO), demoDiscount, ingestUrl.
 - Nota: probar PDF/foto/audio con archivos reales desde WhatsApp (el motor de visión ya está validado).
 
+## Cierre de venta (ciclo completo) — YA FUNCIONA
+Abril cotiza con cantidades, suma totales (lista + web/efectivo + ahorro), y CIERRA:
+- Pide nombre del cliente y si es retiro o envío (con dirección).
+- Llama a la herramienta **`guardarPedido`** → guarda el pedido en la tabla Supabase **`pedidos`**
+  (nro, cliente, items, total, entrega, pago, etc.) y devuelve un **número de pedido** que le confirma al cliente.
+- Funciona igual para Corralón y para los comercios demo.
+- **Aviso al vendedor:** poné el número de Micaela/vendedor en el Config `sellerNumber` para que le llegue
+  un WhatsApp con cada pedido nuevo (vacío = sin aviso). Los pedidos siempre quedan en la tabla `pedidos`.
+
 ## Notas
 - El cuerpo del `sendText` de Evolution puede variar según la versión (`{number, text}` vs
   `{number, textMessage:{text}}`). Si no envía, ajustá el `jsonBody` del nodo *Enviar (Evolution)*.
