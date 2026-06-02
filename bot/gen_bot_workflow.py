@@ -59,14 +59,29 @@ return [{ json: { chatId: jid, number: jid.split('@')[0], text, pushName, sessio
 """
 
 BUSCAR_CODE = r"""
+const CATALOG_URL = 'https://grupoimpactomkt-pixel.github.io/corralon-2-de-abril/catalog.json';
 const store = $getWorkflowStaticData('global');
-const cat = store.catalog || [];
+let cat = store.catalog;
+if (!cat || !cat.length) {
+  try {
+    if (this.helpers && this.helpers.httpRequest) {
+      const r = await this.helpers.httpRequest({ url: CATALOG_URL, json: true });
+      cat = r.productos || r;
+    } else {
+      const r = await fetch(CATALOG_URL); cat = (await r.json()).productos;
+    }
+    store.catalog = cat;
+  } catch (e) { return 'No pude acceder al catálogo ahora; que lo confirme Micaela.'; }
+}
 const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
-const terms = norm(query).split(/\s+/).filter(Boolean);
+const stop = ['del','los','las','por','con','para','que','cuanto','sale','precio','tenes','tienen','hay','una','uno','el','la','de','y','me','mi','por','x'];
+const terms = norm(query).split(/\s+/).filter(t => t.length >= 2 && !stop.includes(t));
 if (!terms.length) return 'Decime qué producto buscás.';
-const hits = cat.filter(p => { const n = norm(p.n); return terms.every(t => n.includes(t)); }).slice(0, 8);
-if (!hits.length) return 'No lo encontré en el catálogo; que lo confirme Micaela.';
-return hits.map(p => `${p.n} | lista $${p.p} | web efectivo $${p.w} | ${p.c}`).join('\n');
+const scored = [];
+for (const p of cat) { const n = norm(p.n); let s = 0; for (const t of terms) if (n.includes(t)) s++; if (s) scored.push([s, p]); }
+scored.sort((a,b) => b[0]-a[0]);
+if (!scored.length) return 'No lo encontré en el catálogo; que lo confirme Micaela.';
+return scored.slice(0,6).map(x => `${x[1].n} | lista $${x[1].p} | web efectivo $${x[1].w} | ${x[1].c}`).join('\n');
 """
 
 AGENDAR_CODE = r"""
@@ -104,13 +119,11 @@ nodes = [
 
     node("Abril (parse & gate)", "n8n-nodes-base.code", 2, [440, 300], {"jsCode": PARSE_CODE}),
 
-    node("Abril", "@n8n/n8n-nodes-langchain.agent", 1.7, [700, 300], {
+    node("Abril", "@n8n/n8n-nodes-langchain.agent", 2, [700, 300], {
         "promptType": "define", "text": "={{ $json.text }}",
         "options": {"systemMessage": PROMPT}}),
 
-    node("Claude (modelo)", "@n8n/n8n-nodes-langchain.lmChatAnthropic", 1.2, [620, 520],
-         {"model": "claude-3-5-haiku-20241022", "options": {"temperature": 0.4}},
-         creds={"anthropicApi": {"id": "REEMPLAZAR", "name": "Anthropic account"}}),
+    None,  # placeholder Modelo (se inyecta abajo)
 
     node("Memoria (por chat)", "@n8n/n8n-nodes-langchain.memoryBufferWindow", 1.3, [760, 520],
          {"sessionIdType": "customKey", "sessionKey": "={{ $json.sessionId }}", "contextWindowLength": 12}),
@@ -145,7 +158,7 @@ connections = {
     "Abril (parse & gate)": {"main": [[{"node": "Abril", "type": "main", "index": 0}]]},
     "Abril": {"main": [[{"node": "Enviar (Evolution)", "type": "main", "index": 0}]]},
     "Enviar (Evolution)": {"main": [[{"node": "Registrar envío", "type": "main", "index": 0}]]},
-    "Claude (modelo)": {"ai_languageModel": [[{"node": "Abril", "type": "ai_languageModel", "index": 0}]]},
+    "Modelo (OpenAI)": {"ai_languageModel": [[{"node": "Abril", "type": "ai_languageModel", "index": 0}]]},
     "Memoria (por chat)": {"ai_memory": [[{"node": "Abril", "type": "ai_memory", "index": 0}]]},
     "buscarPrecio": {"ai_tool": [[{"node": "Abril", "type": "ai_tool", "index": 0}]]},
     "agendarEntrega": {"ai_tool": [[{"node": "Abril", "type": "ai_tool", "index": 0}]]},
@@ -164,11 +177,25 @@ def config_node(creds):
              "value": "https://grupoimpactomkt-pixel.github.io/corralon-2-de-abril/catalog.json"},
         ]}})
 
+def model_node(creds):
+    return node("Modelo (OpenAI)", "@n8n/n8n-nodes-langchain.lmChatOpenAi", 1.2, [620, 520],
+                {"model": {"__rl": True, "mode": "list", "value": creds.get("openAiModel", "gpt-5.4-mini")},
+                 "options": {"temperature": 0.4}},
+                creds={"openAiApi": {"id": creds.get("openAiCredId", "REEMPLAZAR"),
+                                     "name": creds.get("openAiCredName", "OpenAI account")}})
+
 PLACEHOLDER = {"evolutionUrl": "https://TU-EVOLUTION-API", "instance": "TU-INSTANCIA",
                "apiKey": "TU-APIKEY-EVOLUTION"}
 
 def build(creds):
-    ns = [config_node(creds) if n is None else n for n in nodes]
+    ns = []
+    seen_none = 0
+    for n in nodes:
+        if n is None:
+            ns.append(config_node(creds) if seen_none == 0 else model_node(creds))
+            seen_none += 1
+        else:
+            ns.append(n)
     return {"name": "Corralón 2 de Abril · Asistente Abril (WhatsApp)",
             "nodes": ns, "connections": connections,
             "settings": {"executionOrder": "v1"}, "active": False, "pinData": {}}

@@ -94,7 +94,7 @@
       "id": "abril",
       "name": "Abril",
       "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.7,
+      "typeVersion": 2,
       "position": [
         700,
         300
@@ -102,23 +102,27 @@
     },
     {
       "parameters": {
-        "model": "claude-3-5-haiku-20241022",
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5.4-mini"
+        },
         "options": {
           "temperature": 0.4
         }
       },
-      "id": "claude-(modelo)",
-      "name": "Claude (modelo)",
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "id": "modelo-(openai)",
+      "name": "Modelo (OpenAI)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
         620,
         520
       ],
       "credentials": {
-        "anthropicApi": {
+        "openAiApi": {
           "id": "REEMPLAZAR",
-          "name": "Anthropic account"
+          "name": "OpenAI account"
         }
       }
     },
@@ -142,7 +146,7 @@
         "name": "buscarPrecio",
         "description": "Busca productos del catálogo del corralón y devuelve precio de lista y precio web efectivo (15% OFF). Input: el nombre o palabras del producto (ej 'cemento avellaneda 25').",
         "language": "javaScript",
-        "jsCode": "\nconst store = $getWorkflowStaticData('global');\nconst cat = store.catalog || [];\nconst norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');\nconst terms = norm(query).split(/\\s+/).filter(Boolean);\nif (!terms.length) return 'Decime qué producto buscás.';\nconst hits = cat.filter(p => { const n = norm(p.n); return terms.every(t => n.includes(t)); }).slice(0, 8);\nif (!hits.length) return 'No lo encontré en el catálogo; que lo confirme Micaela.';\nreturn hits.map(p => `${p.n} | lista $${p.p} | web efectivo $${p.w} | ${p.c}`).join('\\n');\n"
+        "jsCode": "\nconst CATALOG_URL = 'https://grupoimpactomkt-pixel.github.io/corralon-2-de-abril/catalog.json';\nconst store = $getWorkflowStaticData('global');\nlet cat = store.catalog;\nif (!cat || !cat.length) {\n  try {\n    if (this.helpers && this.helpers.httpRequest) {\n      const r = await this.helpers.httpRequest({ url: CATALOG_URL, json: true });\n      cat = r.productos || r;\n    } else {\n      const r = await fetch(CATALOG_URL); cat = (await r.json()).productos;\n    }\n    store.catalog = cat;\n  } catch (e) { return 'No pude acceder al catálogo ahora; que lo confirme Micaela.'; }\n}\nconst norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');\nconst stop = ['del','los','las','por','con','para','que','cuanto','sale','precio','tenes','tienen','hay','una','uno','el','la','de','y','me','mi','por','x'];\nconst terms = norm(query).split(/\\s+/).filter(t => t.length >= 2 && !stop.includes(t));\nif (!terms.length) return 'Decime qué producto buscás.';\nconst scored = [];\nfor (const p of cat) { const n = norm(p.n); let s = 0; for (const t of terms) if (n.includes(t)) s++; if (s) scored.push([s, p]); }\nscored.sort((a,b) => b[0]-a[0]);\nif (!scored.length) return 'No lo encontré en el catálogo; que lo confirme Micaela.';\nreturn scored.slice(0,6).map(x => `${x[1].n} | lista $${x[1].p} | web efectivo $${x[1].w} | ${x[1].c}`).join('\\n');\n"
       },
       "id": "buscarprecio",
       "name": "buscarPrecio",
@@ -270,7 +274,7 @@
         ]
       ]
     },
-    "Claude (modelo)": {
+    "Modelo (OpenAI)": {
       "ai_languageModel": [
         [
           {

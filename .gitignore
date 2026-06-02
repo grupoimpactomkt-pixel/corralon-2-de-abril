@@ -11,3 +11,4 @@ __pycache__/
 *.pyc
 *.zip
 .DS_Store
+bot/_test_exec.json
