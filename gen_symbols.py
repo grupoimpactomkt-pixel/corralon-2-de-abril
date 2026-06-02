@@ -122,8 +122,78 @@ def logo(w=380, h=104):
 </svg>
 '''
 
+def malvinas_paths(cx, cy, scale, fill="#fff", stroke="#0C2D52", sw=2.4):
+    # versión compacta centrada en (cx,cy) escalada
+    def tp(pts):
+        return " ".join(pts)
+    # reusa la silueta (coordenadas base ~ viewBox 240x150, centro ~120,75)
+    import re
+    raw = malvinas()
+    paths = re.findall(r'<path d="([^"]+)"', raw)
+    out = []
+    for d in paths:
+        # transformar cada número: (n-120)*scale+cx para x, (n-75)*scale+cy para y
+        nums = re.findall(r'-?\d+\.?\d*', d)
+        toks = re.split(r'(-?\d+\.?\d*)', d)
+        idx = 0; res = []; coord = 0
+        for t in toks:
+            if re.fullmatch(r'-?\d+\.?\d*', t or ''):
+                v = float(t)
+                if coord % 2 == 0:
+                    v = (v - 120) * scale + cx
+                else:
+                    v = (v - 75) * scale + cy
+                res.append(f'{v:.1f}'); coord += 1
+            else:
+                res.append(t)
+        out.append('<path d="' + ''.join(res) + f'" fill="{fill}" stroke="{stroke}" stroke-width="{sw}" stroke-linejoin="round"/>')
+    return "\n    ".join(out)
+
+def badge(size=200):
+    cx = cy = size/2
+    rt = size*0.395
+    rr = size*0.475
+    malv = malvinas_paths(cx, cy*0.96, size*0.0022, fill="#fff", stroke=NAVY, sw=size*0.012)
+    top = f"M{cx-rt:.1f},{cy:.1f} A{rt:.1f},{rt:.1f} 0 0 1 {cx+rt:.1f},{cy:.1f}"
+    bot = f"M{cx+rt*0.99:.1f},{cy*1.02:.1f} A{rt:.1f},{rt:.1f} 0 0 1 {cx-rt*0.99:.1f},{cy*1.02:.1f}"
+    fs = size*0.082
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" width="{size}" height="{size}">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.4" r="0.7">
+      <stop offset="0" stop-color="#8fc1ea"/><stop offset="0.6" stop-color="{CELESTE}"/>
+      <stop offset="1" stop-color="{CELESTE_DK}"/>
+    </radialGradient>
+    <path id="ptop" d="{top}"/>
+    <path id="pbot" d="{bot}"/>
+  </defs>
+  <circle cx="{cx:.1f}" cy="{cy:.1f}" r="{rr:.1f}" fill="url(#bg)" stroke="{GOLD}" stroke-width="{size*0.03:.1f}"/>
+  <circle cx="{cx:.1f}" cy="{cy:.1f}" r="{rr-size*0.045:.1f}" fill="none" stroke="#fff" stroke-width="{size*0.006:.1f}" opacity="0.6"/>
+  <g>
+    {malv}
+  </g>
+  <text font-family="Inter, Arial, sans-serif" font-weight="800" font-size="{fs:.1f}" fill="{NAVY}" letter-spacing="1">
+    <textPath href="#ptop" startOffset="50%" text-anchor="middle">CORRALÓN 2 DE ABRIL</textPath>
+  </text>
+  <text font-family="Inter, Arial, sans-serif" font-weight="700" font-size="{fs*0.86:.1f}" fill="#fff" letter-spacing="1.5">
+    <textPath href="#pbot" startOffset="50%" text-anchor="middle">POR SIEMPRE ARGENTINAS</textPath>
+  </text>
+</svg>
+'''
+
+def logo2(w=400, h=104):
+    em = badge(92).split(">", 1)[1].rsplit("</svg>", 1)[0]
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}">
+  <g transform="translate(4,6)">{em}</g>
+  <g transform="translate(112,0)" font-family="Inter, Arial, sans-serif">
+    <text x="0" y="40" font-size="19" font-weight="700" letter-spacing="4" fill="{CELESTE_DK}">CORRALÓN</text>
+    <text x="0" y="72" font-size="35" font-weight="900" fill="{NAVY}">2 DE ABRIL</text>
+    <text x="2" y="91" font-size="10.5" font-weight="600" letter-spacing="1.2" fill="#5a6b7d">CORRALÓN Y FERRETERÍA · MAR DEL PLATA</text>
+  </g>
+</svg>
+'''
+
 open(os.path.join(A, "sol.svg"), "w", encoding="utf-8").write(sol())
 open(os.path.join(A, "malvinas.svg"), "w", encoding="utf-8").write(malvinas())
-open(os.path.join(A, "emblem.svg"), "w", encoding="utf-8").write(emblem())
-open(os.path.join(A, "logo.svg"), "w", encoding="utf-8").write(logo())
-print("OK: sol.svg, malvinas.svg, emblem.svg, logo.svg")
+open(os.path.join(A, "emblem.svg"), "w", encoding="utf-8").write(badge(120))
+open(os.path.join(A, "logo.svg"), "w", encoding="utf-8").write(logo2())
+print("OK: sol.svg, malvinas.svg, emblem.svg(badge), logo.svg")
