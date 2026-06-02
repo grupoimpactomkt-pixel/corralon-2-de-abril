@@ -60,6 +60,17 @@ Abril es **híbrida**: precios por catálogo exacto + un RAG para conocimiento y
   y activá+dispará una vez el workflow *"CORRALON RAG ingesta"* (hace TRUNCATE + re-embeddings + insert).
 - Workflows en n8n: Abril `bJVDxLNXQLgS7yuK`, retrieve `OSWrQ3QEeYPEHvwE`, ingesta `PUd3Mn74wOzS0PAP` (inactivo).
 
+## Modo DEMO multi-cliente (ESTUAPP) — para prospectar en la calle
+Mismo WhatsApp, con clave. Sirve para "convertir" a Abril en cualquier comercio en vivo.
+- Escribís **`IMPACTODEMO`** → Abril pide el nombre del comercio → pide la lista de precios.
+- **Cargás la lista** por: texto/dictado ("Coca 2000, Agua 1200"), **PDF**, **foto/folleto** (OCR visión) o **audio** (Whisper).
+- Abril **se transforma en ese comercio** y cotiza SOLO con esa lista (+ % demo configurable). Salís con **`SALIRDEMO`**.
+- Los comercios quedan guardados en Supabase (`demo_tenants`, key chat_id).
+- Workflows n8n: Abril `bJVDxLNXQLgS7yuK` (Router multi-cliente), ingesta multimedia `corralon-demo-ingest`.
+- El Router está en `bot/_deploy_demo.py`; la ingesta en `bot/_build_ingest.py` (ambos gitignored, leen `_n8n.env`).
+- Config nuevos en el workflow: supabaseUrl/Key, demoKey (IMPACTODEMO), exitKey (SALIRDEMO), demoDiscount, ingestUrl.
+- Nota: probar PDF/foto/audio con archivos reales desde WhatsApp (el motor de visión ya está validado).
+
 ## Notas
 - El cuerpo del `sendText` de Evolution puede variar según la versión (`{number, text}` vs
   `{number, textMessage:{text}}`). Si no envía, ajustá el `jsonBody` del nodo *Enviar (Evolution)*.
