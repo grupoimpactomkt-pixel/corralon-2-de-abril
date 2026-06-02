@@ -50,6 +50,16 @@ En esta versión quedan en la memoria del workflow. **Recomendado:** para que Mi
 planilla, reemplazá la herramienta por un nodo **Google Sheets (Append)** — está documentado dónde
 en el nodo `agendarEntrega`. (Te lo dejo armado cuando me pases la cuenta de Google del corralón.)
 
+## RAG (conocimiento + búsqueda semántica) — YA INSTALADO
+Abril es **híbrida**: precios por catálogo exacto + un RAG para conocimiento y necesidades.
+- **Conocimiento:** `abril-conocimiento.md` → se genera `kb.json` (publicado) → se vectoriza con embeddings
+  OpenAI (`text-embedding-3-small`) en la tabla **`corralon_kb`** de tu Supabase pgvector (aislada de Fiorensa).
+- **Herramienta `consultarInfo`:** sub-workflow n8n *"CORRALON RAG retrieve"* que embebe la pregunta y busca por
+  similitud (`embedding <=> query`). Conectada al agente como tool.
+- **Re-ingestar** (si editás el conocimiento): actualizá `abril-conocimiento.md`, regenerá `kb.json`, publicalo,
+  y activá+dispará una vez el workflow *"CORRALON RAG ingesta"* (hace TRUNCATE + re-embeddings + insert).
+- Workflows en n8n: Abril `bJVDxLNXQLgS7yuK`, retrieve `OSWrQ3QEeYPEHvwE`, ingesta `PUd3Mn74wOzS0PAP` (inactivo).
+
 ## Notas
 - El cuerpo del `sendText` de Evolution puede variar según la versión (`{number, text}` vs
   `{number, textMessage:{text}}`). Si no envía, ajustá el `jsonBody` del nodo *Enviar (Evolution)*.
